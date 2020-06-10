@@ -2,5 +2,6 @@ __pycache__
 data/
 models/
 output/
-scripts/
+script/
 test/ 
+saved_models/
