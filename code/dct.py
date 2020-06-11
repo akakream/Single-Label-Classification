@@ -39,6 +39,10 @@ def prep_data():
     print(x_test.shape[0], 'test samples')
     print(x_train.shape[1:])
 
+    '''
+    For now the SparseCategoricalCrossEntropy is used which takes integer inputs
+    If you want to use CategoricalCrossENtropy which tajes one-hot vectors, uncomment below
+    '''
     # Convert class vectors to binary class matrices.
     #y_train = keras.utils.to_categorical(y_train, 10)
     #y_test = keras.utils.to_categorical(y_test, 10)
@@ -59,7 +63,7 @@ def main(args):
 
     dct_model = model.buildModel(int(args['classes']), x_train.shape[1:])
     
-    model.cust_training_loop(train_dataset, test_dataset, dct_model, int(args['epochs']))
+    model.cust_training_loop(train_dataset, test_dataset, dct_model, int(args['epochs']), int(args['batch_size']))
 
     model_sum = dct_model.summary()
     print(f'model summary: {model_sum}')

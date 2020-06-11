@@ -4,6 +4,7 @@ from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AvgPool3D, BatchNormalization, Activation
 import keras.backend as K
+import numpy as np
 
 save_dir = f'{os.getcwd()}/../saved_models'
 model_name = 'dct_cifar10_trained_model.h5'   
@@ -12,22 +13,26 @@ model_name = 'dct_cifar10_trained_model.h5'
 
 # TODO: Choose a selection strategy and apply
 
-def custom_loss(y_batch_train, logits):
-    '''
-    the input dimensions are (batch_size, num_of_classes)
-    the loss must be a vector of length 32
-    '''
+countBatches = 0
+
+class Model:
     
+
+def custom_loss(y_batch_train, logits, batch_size):
+
     #loss_val = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y_batch_train, logits=logits)
-    loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)  
-    loss_val = loss_fn(y_batch_train, logits)
-
+    loss_object = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
+    loss_array = loss_object(y_batch_train, logits)
+    
     '''
-    print(loss_val.shape)
-    Select here the low loss samples!!!!!!!
+    Select the 8 examples within the minibatch that produces the lowest losses
     '''
+    low_loss_samples = loss_array[np.argsort(x)[-8:]]
+    print(f'Length of low_loss_samples array: {len(low_loss_samples)}')
+    countBatches += 1
+    print(f'Batch Count: {countBatches}')
 
-    return loss_val
+    return tf.nn.compute_average_loss(loss_array, global_batch_size=batch_size)
 
 # This is called L1 in the paper, aka Classification Loss
 def buildClassLoss():
@@ -63,14 +68,14 @@ def useTfData(x_train, x_test, y_train, y_test, batch_size):
 
     return train_dataset, test_dataset
 
-def cust_training_loop(train_dataset, test_dataset, model, epochs):
+def cust_training_loop(train_dataset, test_dataset, model, epochs, batch_size):
     optimizer = keras.optimizers.Adam()
     train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
     for epoch in range(epochs):
         for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
             with tf.GradientTape() as tape:
                 logits = model(x_batch_train, training=True)
-                loss_value = custom_loss(y_batch_train, logits)
+                loss_value = custom_loss(y_batch_train, logits, batch_size)
             grads = tape.gradient(loss_value, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
             
@@ -106,7 +111,7 @@ def buildModel(num_of_classes, inputShape):
     model.add(Dense(512, activation='relu'))
     model.add(Dropout(0.5))
     model.add(Dense(num_of_classes))
-    #model.add(layers.Activation('softmax'))
+    #model.add(Activation('softmax'))
 
     # TODO: Add here the L3 layer
     buildConsLoss()
