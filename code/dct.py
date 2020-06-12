@@ -3,7 +3,7 @@ import numpy as np
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
-import model
+from model import Model
 import pickle
 import datetime
 import argparse
@@ -12,7 +12,6 @@ from keras.datasets import cifar10
 
 def add_arguments():
     ap = argparse.ArgumentParser()
-    ap.add_argument('-d', '--data_destination', required=True, help='relative destination to the folder where pickle files are located')
     ap.add_argument('-c', '--classes', required=True, help='Number of classes. This is going to be added to the last layer of the model')
     ap.add_argument('-b', '--batch_size', default=64, help='Batch size, default is 64')
     ap.add_argument('-e', '--epochs', default=10, help='Number of epochs, default is 10')
@@ -54,25 +53,28 @@ def prep_data():
 
     return x_train, x_test, y_train, y_test
 
-# data_destination, shape, classes, batch_size, epochs 
+# classes, batch_size, epochs 
 def main(args):
     
+    model1 = Model('model1', int(args['classes']), int(args['batch_size']), int(args['epochs']))
+    #model2 = Model('model2', int(args['classes']), int(args['batch_size']), int(args['epochs']))
+
     x_train, x_test, y_train, y_test = prep_data()
 
-    train_dataset, test_dataset = model.useTfData(x_train, x_test, y_train, y_test, int(args['batch_size']))
+    train_dataset, test_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
 
-    dct_model = model.buildModel(int(args['classes']), x_train.shape[1:])
+    model1.buildModel(x_train.shape[1:])
     
-    model.cust_training_loop(train_dataset, test_dataset, dct_model, int(args['epochs']), int(args['batch_size']))
+    model1.cust_training_loop(train_dataset, test_dataset)
 
-    model_sum = dct_model.summary()
+    model_sum = model1.model.summary()
     print(f'model summary: {model_sum}')
-    # model.eval(dct_model, X_TEST, Y_TEST, int(args['batch_size']))
+    # model1.eval(X_TEST, Y_TEST)
     try:
-        model.predict(dct_model, x_test)
+        model1.model.predict(x_test)
     except:
         print("model.predict gave an error")
-    model.saveModel(dct_model)  
+    model1.saveModel()  
     
 if __name__ == '__main__':
     args = add_arguments()
