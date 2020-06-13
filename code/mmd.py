@@ -33,6 +33,9 @@ def mmd(X,Y):
     Calculates the maximum mean discrepancy of two distributions.
     input: tensor
     output: tensor with shape(None,)
+
+    example: input shape(2,5) output shape(2,)
+    example: input shape(5,) output shape()
     '''
 
     L1 = mmd_helper(X,X)
@@ -47,8 +50,11 @@ def test_mmd():
 
     a = tf.constant([[0,1,2,3,4],[5,6,7,8,9]])
     b = tf.constant([[5,6,7,8,9],[0,1,2,3,4]])
+
+    c = tf.constant([0,1,2,3,4])
+    d = tf.constant([5,6,7,8,9])
     
-    t = mmd(a,b)
+    t = mmd(c,d)
     print(t)
 
 #test_mmd()

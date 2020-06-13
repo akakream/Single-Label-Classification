@@ -1,10 +1,10 @@
-import tensorflow as tf    
 import os
+import numpy as np
+import tensorflow as tf    
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AvgPool3D, BatchNormalization, Activation
-import keras.backend as K
-import numpy as np
+import tensorflow.keras.backend as K
 
 class Model:
    
@@ -36,28 +36,6 @@ class Model:
         print(f'This is low_loss_samples : {low_loss_samples}')
 
         return tf.nn.compute_average_loss(loss_array, global_batch_size=self.batch_size)
-
-    # This is called L1 in the paper, aka Classification Loss
-    def buildClassLoss(self):
-        loss = 0
-        print('Classification Loss')
-        return loss    
-
-    # This is called L2 in the paper, aka Discrepancy Loss 
-    def buildDiscLoss(self):
-        loss = 0
-        print('Discrepancy Loss')
-        return loss    
-
-    # This is called L3 in the paper, aka Consistency Loss 
-    def buildConsLoss(self):
-        loss = 0
-        print('Consistency Loss')
-        return loss
-
-    # Loss = L1 + (lambda3)*L3 - (lambda2)*L2  ---> Do this for both F and G, which are the two complementary networks
-    def buildFinalLoss(self, L1, L2, L3):
-        print('Loss = L1 + (lambda3)*L3 - (lambda2)*L2')
 
     def useTfData(self, x_train, x_test, y_train, y_test):
 
@@ -101,28 +79,24 @@ class Model:
 
     def buildModel(self, inputShape):
 
-        model = Sequential()
-        model.add(Conv2D(32, (3, 3), padding='same', activation='relu', input_shape=inputShape))
-        model.add(Conv2D(32, (3, 3), activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
+        inputs = keras.Input(shape=inputShape)
+        x = Conv2D(32, (3,3), padding='same', activation='relu')(inputs)
+        x = Conv2D(32, (3,3), padding='same', activation='relu')(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Dropout(0.25)(x)
 
-        model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
-        model.add(Conv2D(64, (3, 3), activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.25))
+        x = Conv2D(64, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(64, (3,3), padding='same', activation='relu')(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Dropout(0.25)(x)
+        
+        x = Flatten()(x)
+        x = Dense(512, activation='relu')(x)
+        x = Dropout(0.5)(x)
+        outputs = Dense(self.classes)(x)
+        #outputs = Activation('softmax')(x) 
 
-        #TODO: Add here the L2 layer
-        self.buildDiscLoss()
-
-        model.add(Flatten())
-        model.add(Dense(512, activation='relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(self.classes))
-        #model.add(Activation('softmax'))
-
-        # TODO: Add here the L3 layer
-        self.buildConsLoss()
+        model = keras.Model(inputs=inputs, outputs=outputs, name='dct_model')
 
         self.model = model
 
