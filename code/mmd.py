@@ -4,17 +4,18 @@ def gaussian_kernel(X,Y):
     '''
     Gaussian kernel
     input: tensor with shape(None,)
-    output: tensor with shape(None,)
+    output: scalar
     '''
-    kernel = tf.math.exp(-tf.math.square((tf.math.subtract(X,Y)))/2)
+    k = tf.math.subtract(X,Y)
+    k = tf.cast(k, dtype=tf.float32)
+    k = tf.norm(k)
+    k = tf.math.square(k)
+    k = -k/2
+    kernel = tf.math.exp(k)
 
     return kernel
 
 def mmd_helper(X,Y):
-    '''
-    input: tensor (logit)
-    output: tensor with shape(None,)
-    '''  
 
     X_ = tf.keras.backend.eval(X)
     Y_ = tf.keras.backend.eval(Y)
@@ -32,10 +33,7 @@ def mmd(X,Y):
     '''
     Calculates the maximum mean discrepancy of two distributions.
     input: tensor
-    output: tensor with shape(None,)
-
-    example: input shape(2,5) output shape(2,)
-    example: input shape(5,) output shape()
+    output: scalar
     '''
 
     L1 = mmd_helper(X,X)
@@ -48,13 +46,13 @@ def mmd(X,Y):
 
 def test_mmd():
 
-    a = tf.constant([[0,1,2,3,4],[5,6,7,8,9]])
-    b = tf.constant([[5,6,7,8,9],[0,1,2,3,4]])
+    a = tf.constant([[0,34,2,3,4],[5,34,76,82,9],[32,342,532,23,1]])
+    b = tf.constant([[5,2,7,238,9],[0,1,25,33,4],[32,54,15,78,4]])
 
     c = tf.constant([0,1,2,3,4])
     d = tf.constant([5,6,7,8,9])
     
-    t = mmd(c,d)
+    t = mmd(a,b)
     print(t)
 
-test_mmd()
+#test_mmd()

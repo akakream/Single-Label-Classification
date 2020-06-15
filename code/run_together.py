@@ -8,19 +8,24 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size):
     loss_object_2 = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
     loss_array_1 = loss_object_1(y_batch_train, logits_1)
     loss_array_2 = loss_object_2(y_batch_train, logits_2)
-   
+    
     lamb_3 = 1
     L3 = mmd(logits_1, logits_2) * lamb_3
 
-    # 8 lowest loss samples are being used
-    low_loss_samples_1 = tf.sort(loss_array_1)[:8]
-    low_loss_samples_2 = tf.sort(loss_array_2)[:8]
+    try:
+        print(f'L3: {L3}')
+    except:
+        print('L3 could not be printed')
 
-    # low loss samples are being exchanged
-    loss_1 = tf.nn.compute_average_loss(loss_array_1, global_batch_size=batch_size)
-    loss_2 = tf.nn.compute_average_loss(loss_array_2, global_batch_size=batch_size)
-    
-    return loss_1, loss_2
+    # batch_size/4 lowest loss samples are being used
+    low_loss_samples_1 = tf.sort(loss_array_1)[:int(batch_size/4)]
+    low_loss_samples_2 = tf.sort(loss_array_2)[:int(batch_size/4)]
+
+    #TODO: Low loss samples must be exchanged
+    loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size/4))
+    loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size/4))
+
+    return loss_1+L3, loss_2+L3
 
 def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_size):
 
