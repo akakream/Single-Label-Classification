@@ -7,8 +7,9 @@ from model import Model
 import pickle
 import datetime
 import argparse
-import keras
+from tensorflow import keras
 from keras.datasets import cifar10
+from run_together import run_together
 
 def add_arguments():
     ap = argparse.ArgumentParser()
@@ -57,18 +58,23 @@ def prep_data():
 def main(args):
     
     model1 = Model('model1', int(args['classes']), int(args['batch_size']), int(args['epochs']))
-    #model2 = Model('model2', int(args['classes']), int(args['batch_size']), int(args['epochs']))
+    model2 = Model('model2', int(args['classes']), int(args['batch_size']), int(args['epochs']))
 
     x_train, x_test, y_train, y_test = prep_data()
 
     train_dataset, test_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
-
-    model1.buildModel(x_train.shape[1:])
+    #train_dataset_2, test_dataset_2 = model2.useTfData(x_train, x_test, y_train, y_test)
     
-    model1.cust_training_loop(train_dataset, test_dataset)
+    model1.buildModel(x_train.shape[1:])
+    model2.buildModel(x_train.shape[1:])
+    
+    run_together(model1.model, model2.model, train_dataset, test_dataset, int(args['epochs']), int(args['batch_size']))
+    #model1.cust_training_loop(train_dataset_1, test_dataset_1)
+    #model2.cust_training_loop(train_dataset_2, test_dataset_2)
 
-    model_sum = model1.model.summary()
-    print(f'model summary: {model_sum}')
+    model_sum_1 = model1.model.summary()
+    print(f'model1 summary: {model_sum_1}')
+    #keras.utils.plot_model(model1.model, 'model1.png', show_shapes=True)
     # model1.eval(X_TEST, Y_TEST)
     try:
         model1.model.predict(x_test)
@@ -76,6 +82,16 @@ def main(args):
         print("model.predict gave an error")
     model1.saveModel()  
     
+    model_sum_2 = model2.model.summary()
+    print(f'model2 summary: {model_sum_2}')
+    #keras.utils.plot_model(model2.model, 'model2.png', show_shapes=True)
+    # model2.eval(X_TEST, Y_TEST)
+    try:
+        model2.model.predict(x_test)
+    except:
+        print("model.predict gave an error")
+    model2.saveModel()  
+
 if __name__ == '__main__':
     args = add_arguments()
     main(args)

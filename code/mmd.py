@@ -57,4 +57,4 @@ def test_mmd():
     t = mmd(c,d)
     print(t)
 
-#test_mmd()
+test_mmd()

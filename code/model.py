@@ -5,6 +5,7 @@ from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AvgPool3D, BatchNormalization, Activation
 import tensorflow.keras.backend as K
+from mmd import mmd
 
 class Model:
    
