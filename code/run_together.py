@@ -2,13 +2,16 @@ import tensorflow as tf
 from tensorflow import keras
 from mmd import mmd
 
-def loss_fun(y_batch_train, logits_1, logits_2, batch_size):
+def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2):
     
     loss_object_1 = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
     loss_object_2 = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
     loss_array_1 = loss_object_1(y_batch_train, logits_1)
     loss_array_2 = loss_object_2(y_batch_train, logits_2)
     
+    lamb_2 = 1
+    L2 = mmd(l2_logits_m1, l2_logits_m2) * lamb_2 
+
     lamb_3 = 1
     L3 = mmd(logits_1, logits_2) * lamb_3
 
@@ -16,6 +19,11 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size):
         print(f'L3: {L3}')
     except:
         print('L3 could not be printed')
+    
+    try:
+        print(f'L2: {L2}')
+    except:
+        print('L2 could not be printed')
 
     # batch_size/4 lowest loss samples are being used
     low_loss_samples_1 = tf.sort(loss_array_1)[:int(batch_size/4)]
@@ -25,7 +33,7 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size):
     loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size/4))
     loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size/4))
 
-    return loss_1+L3, loss_2+L3
+    return loss_1+L3-L2, loss_2+L3-L2
 
 def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_size):
 
@@ -44,9 +52,16 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
 
                 #TODO: Get L2 here and give it as input to the loss_fun 
                 
-                logits_1 = model_1(x_batch_train, training=True)
-                logits_2 = model_2(x_batch_train, training=True)
-                loss_value_1, loss_value_2 = loss_fun(y_batch_train, logits_1, logits_2, batch_size)
+                logits_1, l2_logits_m1 = model_1(x_batch_train, training=True)
+                logits_2, l2_logits_m2 = model_2(x_batch_train, training=True)
+                print(f'logits_1: {logits_1}')
+                print(f'logits_1 shape: {logits_1.shape}')
+                #l2_logits_m1 = tf.keras.backend.eval(model_1.get_layer("l2-layer").output)
+                #l2_logits_m2 = tf.keras.backend.eval(model_2.get_layer("l2-layer").output)
+                print(f'l2_logits_m1: {l2_logits_m1}')
+                print(f'l2_logits_m1 shape: {l2_logits_m1.shape}')
+                loss_value_1, loss_value_2 = loss_fun(y_batch_train, logits_1, logits_2, batch_size,
+                        l2_logits_m1, l2_logits_m2)
             
             grads_1 = tape.gradient(loss_value_1, model_1.trainable_weights)
             grads_2 = tape.gradient(loss_value_2, model_2.trainable_weights)

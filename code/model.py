@@ -87,7 +87,8 @@ class Model:
         x = Dropout(0.25)(x)
 
         x = Conv2D(64, (3,3), padding='same', activation='relu')(x)
-        x = Conv2D(64, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(64, (3,3), padding='same', activation='relu', name='l2-layer')(x)
+        l2_logits = x
         x = MaxPooling2D(pool_size=(2, 2))(x)
         x = Dropout(0.25)(x)
         
@@ -97,8 +98,8 @@ class Model:
         outputs = Dense(self.classes)(x)
         #outputs = Activation('softmax')(x) 
 
-        model = keras.Model(inputs=inputs, outputs=outputs, name='dct_model')
-
+        model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
+    
         self.model = model
 
     def eval(self, X_TEST, Y_TEST):
