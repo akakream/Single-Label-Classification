@@ -15,21 +15,39 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     lamb_3 = 1
     L3 = mmd(logits_1, logits_2) * lamb_3
 
-    try:
-        print(f'L3: {L3}')
-    except:
-        print('L3 could not be printed')
-    
-    try:
-        print(f'L2: {L2}')
-    except:
-        print('L2 could not be printed')
+    print(f'L3: {L3}')
+    print(f'L2: {L2}')
 
     # batch_size/4 lowest loss samples are being used
     low_loss_samples_1 = tf.sort(loss_array_1)[:int(batch_size/4)]
     low_loss_samples_2 = tf.sort(loss_array_2)[:int(batch_size/4)]
 
-    #TODO: Low loss samples must be exchanged
+    '''
+    try:
+        print(f'low_loss_samples_1: {low_loss_samples_1}')
+        print(f'low_loss_samples_2: {low_loss_samples_2}')
+    except:
+        print('Could not print low_loss_samples!')
+
+    try:
+        print(f'low_loss_samples_1 shape: {low_loss_samples_1.shape}')
+        print(f'low_loss_samples_2 shape: {low_loss_samples_2.shape}')
+    except:
+        print('Could not print the shape of low_loss_samples!')
+    
+    try:
+        print(f'low_loss_samples_1 len: {len(low_loss_samples_1)}')
+        print(f'low_loss_samples_2 len: {len(low_loss_samples_2)}')
+    except:
+        print('Could not print the len of low_loss_samples!')
+
+    try:
+        print(f'low_loss_samples_1 type: {type(low_loss_samples_1)}')
+        print(f'low_loss_samples_2 type: {type(low_loss_samples_2)}')
+    except:
+        print('Could not print the type of low_loss_samples!')
+    '''
+
     loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size/4))
     loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size/4))
 
@@ -54,20 +72,19 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
                 
                 logits_1, l2_logits_m1 = model_1(x_batch_train, training=True)
                 logits_2, l2_logits_m2 = model_2(x_batch_train, training=True)
-                print(f'logits_1: {logits_1}')
-                print(f'logits_1 shape: {logits_1.shape}')
-                #l2_logits_m1 = tf.keras.backend.eval(model_1.get_layer("l2-layer").output)
-                #l2_logits_m2 = tf.keras.backend.eval(model_2.get_layer("l2-layer").output)
-                print(f'l2_logits_m1: {l2_logits_m1}')
-                print(f'l2_logits_m1 shape: {l2_logits_m1.shape}')
+                #print(f'logits_1: {logits_1}')
+                #print(f'logits_1 shape: {logits_1.shape}')
+                #print(f'l2_logits_m1: {l2_logits_m1}')
+                #print(f'l2_logits_m1 shape: {l2_logits_m1.shape}')
                 loss_value_1, loss_value_2 = loss_fun(y_batch_train, logits_1, logits_2, batch_size,
                         l2_logits_m1, l2_logits_m2)
             
             grads_1 = tape.gradient(loss_value_1, model_1.trainable_weights)
             grads_2 = tape.gradient(loss_value_2, model_2.trainable_weights)
             
-            optimizer_1.apply_gradients(zip(grads_1, model_1.trainable_weights))
-            optimizer_2.apply_gradients(zip(grads_2, model_2.trainable_weights))
+            #LOW LOSS SAMPLES ARE EXCHANGED HERE
+            optimizer_1.apply_gradients(zip(grads_2, model_1.trainable_weights))
+            optimizer_2.apply_gradients(zip(grads_1, model_2.trainable_weights))
 
             train_acc_metric_1(y_batch_train, logits_1)
             train_acc_metric_2(y_batch_train, logits_2)

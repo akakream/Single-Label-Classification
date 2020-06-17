@@ -38,10 +38,10 @@ def prep_data():
     '''
     # The data, split between train and test sets:
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    print('x_train shape:', x_train.shape)
-    print(x_train.shape[0], 'train samples')
-    print(x_test.shape[0], 'test samples')
-    print(x_train.shape[1:])
+    #print('x_train shape:', x_train.shape)
+    #print(x_train.shape[0], 'train samples')
+    #print(x_test.shape[0], 'test samples')
+    #print(x_train.shape[1:])
 
     '''
     For now the SparseCategoricalCrossEntropy is used which takes integer inputs
@@ -53,8 +53,8 @@ def prep_data():
 
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
-    x_train /= 255
-    x_test /= 255
+    x_train /= 255.0
+    x_test /= 255.0
 
     return x_train, x_test, y_train, y_test
 
