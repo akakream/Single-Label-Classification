@@ -61,7 +61,7 @@ class Model:
         for epoch in range(self.epochs):
             for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
                 with tf.GradientTape() as tape:
-                    logits = self.model(x_batch_train, training=True)
+                    logits, _ = self.model(x_batch_train, training=True)
                     loss_value = self.custom_loss(y_batch_train, logits)
                 grads = tape.gradient(loss_value, self.model.trainable_weights)
                 optimizer.apply_gradients(zip(grads, self.model.trainable_weights))

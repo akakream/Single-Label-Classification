@@ -67,15 +67,9 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
     for epoch in range(epochs):
         for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
             with tf.GradientTape(persistent=True) as tape:
-
-                #TODO: Get L2 here and give it as input to the loss_fun 
                 
                 logits_1, l2_logits_m1 = model_1(x_batch_train, training=True)
                 logits_2, l2_logits_m2 = model_2(x_batch_train, training=True)
-                #print(f'logits_1: {logits_1}')
-                #print(f'logits_1 shape: {logits_1.shape}')
-                #print(f'l2_logits_m1: {l2_logits_m1}')
-                #print(f'l2_logits_m1 shape: {l2_logits_m1.shape}')
                 loss_value_1, loss_value_2 = loss_fun(y_batch_train, logits_1, logits_2, batch_size,
                         l2_logits_m1, l2_logits_m2)
             
