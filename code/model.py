@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf    
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AvgPool3D, BatchNormalization, Activation
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AveragePooling2D, BatchNormalization, Activation
 import tensorflow.keras.backend as K
 from mmd import mmd
 
@@ -81,22 +81,28 @@ class Model:
     def buildModel(self, inputShape):
 
         inputs = keras.Input(shape=inputShape)
-        x = Conv2D(32, (3,3), padding='same', activation='relu')(inputs)
-        x = Conv2D(32, (3,3), padding='same', activation='relu')(x)
-        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Conv2D(128, (3,3), padding='same', activation='relu')(inputs)
+        x = Conv2D(128, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(128, (3,3), padding='same', activation='relu')(x)
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2,2))(x)
         x = Dropout(0.25)(x)
 
-        x = Conv2D(64, (3,3), padding='same', activation='relu')(x)
-        x = Conv2D(64, (3,3), padding='same', activation='relu', name='l2-layer')(x)
+        x = Conv2D(256, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(256, (3,3), padding='same', activation='relu', name='l2-layer')(x)
         l2_logits = x
-        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Conv2D(256, (3,3), padding='same', activation='relu')(x)
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2,2))(x)
         x = Dropout(0.25)(x)
+
+        x = Conv2D(512, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(256, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(128, (3,3), padding='same', activation='relu')(x)
+        x = AveragePooling2D(pool_size=(2,2), strides=(2,2))(x)
         
         x = Flatten()(x)
-        x = Dense(512, activation='relu')(x)
-        x = Dropout(0.5)(x)
-        outputs = Dense(self.classes)(x)
-        #outputs = Activation('softmax')(x) 
+        x = Dense(128, activation='relu')(x)
+        x = Dense(self.classes)(x)
+        outputs = Activation('softmax')(x) 
 
         model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
     
