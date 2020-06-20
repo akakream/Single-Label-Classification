@@ -48,8 +48,8 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
         print('Could not print the type of low_loss_samples!')
     '''
 
-    loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size/4))
-    loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size/4))
+    loss_1 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size/4))
+    loss_2 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size/4))
 
     return loss_1+L3-L2, loss_2+L3-L2
 
@@ -76,9 +76,8 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
             grads_1 = tape.gradient(loss_value_1, model_1.trainable_weights)
             grads_2 = tape.gradient(loss_value_2, model_2.trainable_weights)
             
-            #LOW LOSS SAMPLES ARE EXCHANGED HERE
-            optimizer_1.apply_gradients(zip(grads_2, model_1.trainable_weights))
-            optimizer_2.apply_gradients(zip(grads_1, model_2.trainable_weights))
+            optimizer_1.apply_gradients(zip(grads_1, model_1.trainable_weights))
+            optimizer_2.apply_gradients(zip(grads_2, model_2.trainable_weights))
 
             train_acc_metric_1(y_batch_train, logits_1)
             train_acc_metric_2(y_batch_train, logits_2)
