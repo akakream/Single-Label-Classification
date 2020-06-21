@@ -17,7 +17,7 @@ def add_arguments():
             description='This is a modified implementation of th paper Learning from Noisy Labels via Discrepant Collaborative Training', 
             epilog='-- Float like a butterfly, sting like a bee --')
     ap.add_argument('-c', '--classes', required=True, help='Number of classes. This is going to be added to the last layer of the model')
-    ap.add_argument('-b', '--batch_size', default=64, help='Batch size, default is 64')
+    ap.add_argument('-b', '--batch_size', default=32, help='Batch size, default is 32')
     ap.add_argument('-e', '--epochs', default=10, help='Number of epochs, default is 10')
     ap.add_argument('-m', '--models', default=2, help='Number of models to run, default is 2')
     args = vars(ap.parse_args())
@@ -69,17 +69,17 @@ def main(args):
     
     model1 = Model('model1', int(args['classes']), int(args['batch_size']), int(args['epochs']))
     
-    train_dataset, test_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
+    train_dataset, test_dataset, val_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
 
     model1.buildModel(x_train.shape[1:])
 
     if int(args['models']) == 1:
-        model1.cust_training_loop(train_dataset, test_dataset)
-        #model2.cust_training_loop(train_dataset, test_dataset)
+        model1.cust_training_loop(train_dataset, test_dataset, val_dataset)
+        #model2.cust_training_loop(train_dataset, test_dataset, val_dataset)
     elif int(args['models']) == 2:
         model2 = Model('model2', int(args['classes']), int(args['batch_size']), int(args['epochs']))
         model2.buildModel(x_train.shape[1:])
-        run_together(model1.model, model2.model, train_dataset, test_dataset, int(args['epochs']), int(args['batch_size']))
+        run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, int(args['epochs']), int(args['batch_size']))
 
     model_sum_1 = model1.model.summary()
     print(f'model1 summary: {model_sum_1}')

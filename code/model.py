@@ -38,14 +38,21 @@ class Model:
     def useTfData(self, x_train, x_test, y_train, y_test):
 
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-        test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-
         SHUFFLE_BUFFER_SIZE = 100
-
         train_dataset = train_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(self.batch_size)
+        
+        x_val = x_train[-10000:]
+        y_val = y_train[-10000:]
+        x_train = x_train[:-10000]
+        y_train = y_train[:-10000]
+
+        val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
+        val_dataset = val_dataset.batch(self.batch_size)
+
+        test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
         test_dataset = test_dataset.batch(self.batch_size)
 
-        return train_dataset, test_dataset
+        return train_dataset, test_dataset, val_dataset
 
     def cust_training_loop(self, train_dataset, test_dataset):
         
@@ -98,8 +105,7 @@ class Model:
         
         x = Flatten()(x)
         x = Dense(128)(x)
-        x = Dense(self.classes)(x)
-        outputs = Activation('softmax')(x) 
+        outputs = Dense(self.classes)(x)
 
         model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
     
@@ -124,9 +130,7 @@ class Model:
         x = Flatten()(x)
         x = Dense(512, activation='relu')(x)
         x = Dropout(0.5)(x)
-        x = Dense(self.classes)(x)
-
-        outputs = Activation('softmax')(x) 
+        outputs = Dense(self.classes)(x)
 
         model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
     

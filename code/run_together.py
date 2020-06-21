@@ -1,7 +1,9 @@
 import tensorflow as tf
 from tensorflow import keras
 from mmd import mmd
+import time
 
+#@tf.function
 def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2):
     
     loss_object_1 = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
@@ -36,7 +38,8 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
 
     return loss_1+L3-L2, loss_2+L3-L2
 
-def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_size):
+#@tf.function
+def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epochs, batch_size):
 
     if model_1 == None or model_2 == None:
         raise Exception('Models are not built properly')
@@ -47,7 +50,14 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
     train_acc_metric_1 = keras.metrics.SparseCategoricalAccuracy()
     train_acc_metric_2 = keras.metrics.SparseCategoricalAccuracy()
     
+    val_acc_metric_1 = keras.metrics.SparseCategoricalAccuracy()
+    val_acc_metric_2 = keras.metrics.SparseCategoricalAccuracy()
+    
     for epoch in range(epochs):
+
+        print(f'Start of epoch {epoch}')
+        start_time = time.time()
+        
         for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
             with tf.GradientTape(persistent=True) as tape:
                 
@@ -62,22 +72,36 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
             optimizer_1.apply_gradients(zip(grads_1, model_1.trainable_weights))
             optimizer_2.apply_gradients(zip(grads_2, model_2.trainable_weights))
 
-            train_acc_metric_1(y_batch_train, logits_1)
-            train_acc_metric_2(y_batch_train, logits_2)
+            train_acc_metric_1.update_state(y_batch_train, logits_1)
+            train_acc_metric_2.update_state(y_batch_train, logits_2)
+
+            #train_acc_metric_1(y_batch_train, logits_1)
+            #train_acc_metric_2(y_batch_train, logits_2)
+
             if step % 200 == 0:
-                print("Training loss (for one batch) at step %d: %.4f" % (step, float(loss_value_1))                                       )
-                print("Seen so far: %s samples" % ((step + 1) * 64))
-                print("Training loss (for one batch) at step %d: %.4f" % (step, float(loss_value_2))                                       )
-                print("Seen so far: %s samples" % ((step + 1) * 64))
+                print(f"Training loss (for one batch) at step {step}: {float(loss_value_1)}")
+                print(f"Seen so far: {(step+1)*batch_size} samples")
+                print(f"Training loss (for one batch) at step {step}: {float(loss_value_2)}")
+                print(f"Seen so far: {(step+1)*batch_size} samples")
                                                
         train_acc_1 = train_acc_metric_1.result()
         train_acc_2 = train_acc_metric_2.result()
-        print('Training acc 1 over epoch: %s' % (float(train_acc_1),))
-        print('Training acc 2 over epoch: %s' % (float(train_acc_2),))
+        print(f'Training acc 1 over epoch: {float(train_acc_1)}')
+        print(f'Training acc 2 over epoch: {float(train_acc_2)}')
         train_acc_metric_1.reset_states()
         train_acc_metric_2.reset_states()
 
+        for x_batch_val, y_batch_val in val_dataset:
+            val_logits_1, _ = model_1(x_batch_val, training=False)
+            val_logits_2, _ = model_2(x_batch_val, training=False)
 
+            val_acc_metric_1.update_state(y_batch_val, val_logits_1)
+            val_acc_metric_2.update_state(y_batch_val, val_logits_2)
+
+        val_acc_1 = val_acc_metric_1.result()
+        val_acc_2 = val_acc_metric_2.result()
+        print(f'Validation acc: {float(val_acc_1)}')
+        print(f'Time taken: {time.time() - start_time}')
 
 
 
