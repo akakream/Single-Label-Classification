@@ -29,12 +29,9 @@ class Model:
         #loss_val = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=y_batch_train, logits=logits)
         loss_object = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
         loss_array = loss_object(y_batch_train, logits)
-        
-        print(f'This is loss_array: {loss_array}')
             
         #Select the 8 examples within the minibatch that produces the lowest losses
         low_loss_samples = tf.sort(loss_array)[:8]
-        print(f'This is low_loss_samples : {low_loss_samples}')
 
         return tf.nn.compute_average_loss(loss_array, global_batch_size=self.batch_size)
 
@@ -100,8 +97,35 @@ class Model:
         x = AveragePooling2D(pool_size=(2,2), strides=(2,2))(x)
         
         x = Flatten()(x)
-        x = Dense(128, activation='relu')(x)
+        x = Dense(128)(x)
         x = Dense(self.classes)(x)
+        outputs = Activation('softmax')(x) 
+
+        model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
+    
+        self.model = model
+
+    def build_OLD_Model(self, inputShape):
+
+        inputs = keras.Input(shape=inputShape)
+        x = Conv2D(32, (3,3), padding='same', activation='relu')(inputs)
+        x = Conv2D(32, (3,3), padding='same', activation='relu')(x)
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2,2))(x)
+        x = Dropout(0.25)(x)
+
+        x = Conv2D(64, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(64, (3,3), padding='same', activation='relu', name='l2-layer')(x)
+        l2_logits = x
+        x = MaxPooling2D(pool_size=(2, 2), strides=(2,2))(x)
+        x = Dropout(0.25)(x)
+
+        #x = AveragePooling2D(pool_size=(2,2), strides=(2,2))(x)
+        
+        x = Flatten()(x)
+        x = Dense(512, activation='relu')(x)
+        x = Dropout(0.5)(x)
+        x = Dense(self.classes)(x)
+
         outputs = Activation('softmax')(x) 
 
         model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')

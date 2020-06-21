@@ -9,10 +9,10 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     loss_array_1 = loss_object_1(y_batch_train, logits_1)
     loss_array_2 = loss_object_2(y_batch_train, logits_2)
     
-    lamb_2 = 0.5
+    lamb_2 = 1
     L2 = mmd(l2_logits_m1, l2_logits_m2) * lamb_2 
 
-    lamb_3 = 0.5
+    lamb_3 = 1
     L3 = mmd(logits_1, logits_2) * lamb_3
 
     print(f'L3: {L3}')
@@ -30,11 +30,6 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     print(f'This is loss_array_2: {loss_array_2}')
     print(f'This is low_loss_samples_1: {low_loss_samples_1}')
     print(f'This is low_loss_samples_2: {low_loss_samples_2}')
-    '''
-    # batch_size/4 lowest loss samples are being used
-    low_loss_samples_1 = tf.sort(loss_array_1)[:int(batch_size/4)]
-    low_loss_samples_2 = tf.sort(loss_array_2)[:int(batch_size/4)]
-    '''
 
     loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size*3/4))
     loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size*3/4))
@@ -47,8 +42,8 @@ def run_together(model_1, model_2, train_dataset, test_dataset, epochs, batch_si
         raise Exception('Models are not built properly')
         exit()
 
-    optimizer_1 = keras.optimizers.Adam()
-    optimizer_2 = keras.optimizers.Adam()
+    optimizer_1 = keras.optimizers.Adam(learning_rate=0.001)
+    optimizer_2 = keras.optimizers.Adam(learning_rate=0.001)
     train_acc_metric_1 = keras.metrics.SparseCategoricalAccuracy()
     train_acc_metric_2 = keras.metrics.SparseCategoricalAccuracy()
     
