@@ -45,7 +45,7 @@ def prep_data():
 
     '''
     For now the SparseCategoricalCrossEntropy is used which takes integer inputs
-    If you want to use CategoricalCrossENtropy which tajes one-hot vectors, uncomment below
+    If you want to use CategoricalCrossEntropy which takes one-hot vectors, uncomment below
     '''
     # Convert class vectors to binary class matrices.
     #y_train = keras.utils.to_categorical(y_train, 10)
@@ -71,14 +71,14 @@ def main(args):
     
     train_dataset, test_dataset, val_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
 
-    model1.buildModel(x_train.shape[1:])
+    model1.build_OLD_Model(x_train.shape[1:])
 
     if int(args['models']) == 1:
         model1.cust_training_loop(train_dataset, test_dataset, val_dataset)
         #model2.cust_training_loop(train_dataset, test_dataset, val_dataset)
     elif int(args['models']) == 2:
         model2 = Model('model2', int(args['classes']), int(args['batch_size']), int(args['epochs']))
-        model2.buildModel(x_train.shape[1:])
+        model2.build_OLD_Model(x_train.shape[1:])
         run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, int(args['epochs']), int(args['batch_size']))
 
     model_sum_1 = model1.model.summary()
