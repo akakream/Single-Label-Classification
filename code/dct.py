@@ -9,17 +9,20 @@ import datetime
 import argparse
 from tensorflow import keras
 from keras.datasets import cifar10
+from keras.datasets import cifar100
+from keras.datasets import mnist
 from run_together import run_together
 
+NUM_OF_CLASSES = None
+
 def add_arguments():
-    #TODO: Integer arguments are casted in the program, fix it
     ap = argparse.ArgumentParser(prog='discrepant collaborative training', 
             description='This is a modified implementation of th paper Learning from Noisy Labels via Discrepant Collaborative Training', 
             epilog='-- Float like a butterfly, sting like a bee --')
-    ap.add_argument('-c', '--classes', required=True, help='Number of classes. This is going to be added to the last layer of the model')
-    ap.add_argument('-b', '--batch_size', default=32, help='Batch size, default is 32')
-    ap.add_argument('-e', '--epochs', default=10, help='Number of epochs, default is 10')
-    ap.add_argument('-m', '--models', default=2, help='Number of models to run, default is 2')
+    ap.add_argument('-b', '--batch_size', type=int, default=32, help='Batch size, default is 32')
+    ap.add_argument('-e', '--epochs', type=int, default=10, help='Number of epochs, default is 10')
+    ap.add_argument('-m', '--models', type=int, default=2, help='Number of models to run, default is 2')
+    ap.add_argument('-d', '--dataset', default=cifar10, help='cifar10 or cifar100')
     args = vars(ap.parse_args())
 
     return args
@@ -32,12 +35,49 @@ def unpickle(file):
         dict = pickle.load(fo, encoding='bytes')
     return dict        
 
-def prep_data():
+def prep_data(dataset):
     '''
     Creates numpy arrays that are ready to be fed into model
     '''
+
+    global NUM_OF_CLASSES
+    
     # The data, split between train and test sets:
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    if dataset == 'cifar10':
+        '''
+        32x32
+        50k train
+        10k test
+        '''
+        NUM_OF_CLASSES = 10
+        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    
+    elif dataset == 'cifar100_fine':
+        '''
+        32x32
+        50k train
+        10k test
+        '''
+        NUM_OF_CLASSES = 100
+        (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='fine')
+    
+    elif dataset == 'cifar100_coarse': 
+        '''
+        32x32
+        50k train
+        10k test
+        '''
+        NUM_OF_CLASSES = 20
+        (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='coarse')
+    
+    elif dataset == 'mnist': 
+        '''
+        28x28
+        60k train
+        10k test
+        '''
+        NUM_OF_CLASSES = 10
+        (x_train, y_train), (x_test, y_test) = mnist.load_data()
     #print('x_train shape:', x_train.shape)
     #print(x_train.shape[0], 'train samples')
     #print(x_test.shape[0], 'test samples')
@@ -58,44 +98,41 @@ def prep_data():
 
     return x_train, x_test, y_train, y_test
 
-# classes, batch_size, epochs, models 
 def main(args):
 
-    if int(args['models']) != 1 and int(args['models']) != 2: 
+    if args['models'] != 1 and args['models'] != 2: 
         print('Enter 1 for a single model, enter 2 for collaborative model')
         exit()
 
-    x_train, x_test, y_train, y_test = prep_data()
+    x_train, x_test, y_train, y_test = prep_data(args['dataset'])
     
-    model1 = Model('model1', int(args['classes']), int(args['batch_size']), int(args['epochs']))
+    model1 = Model('model1', NUM_OF_CLASSES, args['batch_size'], args['epochs'])
     
     train_dataset, test_dataset, val_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
 
     model1.build_OLD_Model(x_train.shape[1:])
 
-    if int(args['models']) == 1:
+    if args['models'] == 1:
         model1.cust_training_loop(train_dataset, test_dataset, val_dataset)
         #model2.cust_training_loop(train_dataset, test_dataset, val_dataset)
-    elif int(args['models']) == 2:
-        model2 = Model('model2', int(args['classes']), int(args['batch_size']), int(args['epochs']))
+    elif args['models'] == 2:
+        model2 = Model('model2', NUM_OF_CLASSES, args['batch_size'], args['epochs'])
         model2.build_OLD_Model(x_train.shape[1:])
-        run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, int(args['epochs']), int(args['batch_size']))
+        run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, args['epochs'], args['batch_size'])
 
     model_sum_1 = model1.model.summary()
     print(f'model1 summary: {model_sum_1}')
     #keras.utils.plot_model(model1.model, 'model1.png', show_shapes=True)
-    # model1.eval(X_TEST, Y_TEST)
     try:
         model1.model.predict(x_test)
     except:
         print("model.predict gave an error")
     model1.saveModel()  
     
-    if int(args['models']) == 2:
+    if args['models'] == 2:
         model_sum_2 = model2.model.summary()
         print(f'model2 summary: {model_sum_2}')
         #keras.utils.plot_model(model2.model, 'model2.png', show_shapes=True)
-        # model2.eval(X_TEST, Y_TEST)
         try:
             model2.model.predict(x_test)
         except:
