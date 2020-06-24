@@ -110,14 +110,14 @@ def main(args):
     
     train_dataset, test_dataset, val_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
 
-    model1.build_OLD_Model(x_train.shape[1:])
+    model1.buildModel(x_train.shape[1:])
 
     if args['models'] == 1:
         model1.cust_training_loop(train_dataset, test_dataset, val_dataset)
         #model2.cust_training_loop(train_dataset, test_dataset, val_dataset)
     elif args['models'] == 2:
         model2 = Model('model2', NUM_OF_CLASSES, args['batch_size'], args['epochs'])
-        model2.build_OLD_Model(x_train.shape[1:])
+        model2.buildModel(x_train.shape[1:])
         run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, args['epochs'], args['batch_size'])
 
     model_sum_1 = model1.model.summary()

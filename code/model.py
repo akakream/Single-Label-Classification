@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf    
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AveragePooling2D, BatchNormalization, Activation
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AveragePooling2D, BatchNormalization, Activation, LeakyReLU
 import tensorflow.keras.backend as K
 from mmd import mmd
 
@@ -85,22 +85,31 @@ class Model:
     def buildModel(self, inputShape):
 
         inputs = keras.Input(shape=inputShape)
-        x = Conv2D(128, (3,3), padding='same', activation='relu')(inputs)
-        x = Conv2D(128, (3,3), padding='same', activation='relu')(x)
-        x = Conv2D(128, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(128, (3,3), padding='same')(inputs)
+        x = LeakyReLU(alpha=0.01)(x)
+        x = Conv2D(128, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
+        x = Conv2D(128, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
         x = MaxPooling2D(pool_size=(2, 2), strides=(2,2))(x)
         x = Dropout(0.25)(x)
 
-        x = Conv2D(256, (3,3), padding='same', activation='relu')(x)
-        x = Conv2D(256, (3,3), padding='same', activation='relu', name='l2-layer')(x)
+        x = Conv2D(256, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
+        x = Conv2D(256, (3,3), padding='same', name='l2-layer')(x)
+        x = LeakyReLU(alpha=0.01)(x)
         l2_logits = x
-        x = Conv2D(256, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(256, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
         x = MaxPooling2D(pool_size=(2, 2), strides=(2,2))(x)
         x = Dropout(0.25)(x)
 
-        x = Conv2D(512, (3,3), padding='same', activation='relu')(x)
-        x = Conv2D(256, (3,3), padding='same', activation='relu')(x)
-        x = Conv2D(128, (3,3), padding='same', activation='relu')(x)
+        x = Conv2D(512, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
+        x = Conv2D(256, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
+        x = Conv2D(128, (3,3), padding='same')(x)
+        x = LeakyReLU(alpha=0.01)(x)
         x = AveragePooling2D(pool_size=(2,2), strides=(2,2))(x)
         
         x = Flatten()(x)
