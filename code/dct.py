@@ -21,19 +21,12 @@ def add_arguments():
             epilog='-- Float like a butterfly, sting like a bee --')
     ap.add_argument('-b', '--batch_size', type=int, default=32, help='Batch size, default is 32')
     ap.add_argument('-e', '--epochs', type=int, default=10, help='Number of epochs, default is 10')
-    ap.add_argument('-m', '--models', type=int, default=2, help='Number of models to run, default is 2')
-    ap.add_argument('-d', '--dataset', default=cifar10, help='cifar10 or cifar100')
+    ap.add_argument('-f', '--framework', default='co', help='collaborative training or training with single model: co and single')
+    ap.add_argument('-a', '--architecture', default='paper_model', help='paper_model or keras_model')
+    ap.add_argument('-d', '--dataset', default='cifar10', help='cifar10, cifar100_fine, cifar100_coarse or mnist')
     args = vars(ap.parse_args())
 
     return args
-
-def plot():
-    print('--plot--')
-
-def unpickle(file):
-    with open(file, 'rb') as fo:
-        dict = pickle.load(fo, encoding='bytes')
-    return dict        
 
 def prep_data(dataset):
     '''
@@ -42,7 +35,6 @@ def prep_data(dataset):
 
     global NUM_OF_CLASSES
     
-    # The data, split between train and test sets:
     if dataset == 'cifar10':
         '''
         32x32
@@ -78,10 +70,6 @@ def prep_data(dataset):
         '''
         NUM_OF_CLASSES = 10
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    #print('x_train shape:', x_train.shape)
-    #print(x_train.shape[0], 'train samples')
-    #print(x_test.shape[0], 'test samples')
-    #print(x_train.shape[1:])
 
     '''
     For now the SparseCategoricalCrossEntropy is used which takes integer inputs
@@ -100,26 +88,48 @@ def prep_data(dataset):
 
 def main(args):
 
-    if args['models'] != 1 and args['models'] != 2: 
-        print('Enter 1 for a single model, enter 2 for collaborative model')
-        exit()
+    if args['framework'] not in ('co', 'single'): 
+        raise ValueError('Enter 1 for a single model, enter 2 for collaborative model')
 
-    x_train, x_test, y_train, y_test = prep_data(args['dataset'])
+    # Load the given dataset by user
+    if args['dataset'] in ('cifar10', 'cifar100_fine', 'cifar100_coarse', 'mnist'):  
+        x_train, x_test, y_train, y_test = prep_data(args['dataset'])
+    else:
+        raise ValueError('Argument Error: Legal arguments are cifar10, cifar100_fine, cifar100_fine, mnist')
     
+    # Set model1 parameters
     model1 = Model('model1', NUM_OF_CLASSES, args['batch_size'], args['epochs'])
     
+    # Create validation arrays and by-custom-training-loop-consumable datasets
     train_dataset, test_dataset, val_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
-
-    model1.buildModel(x_train.shape[1:])
-
-    if args['models'] == 1:
+    
+    # model1 is going to be created no matter what, as long as the argument is right
+    if args['architecture'] == 'paper_model':
+        model1.build_paper_model(x_train.shape[1:])
+    elif args['architecture'] == 'keras_model':
+        model1.build_keras_model(x_train.shape[1:])
+    else:
+        raise ValueError('Argument Error: Legal arguments are paper_model and keras_model') 
+    
+    # If single model framework is chosen, runs the models own custom training loop
+    # If co model framework is chosen, creates a second model and runs them simultaneously
+    if args['framework'] == 'single':
         model1.cust_training_loop(train_dataset, test_dataset, val_dataset)
-        #model2.cust_training_loop(train_dataset, test_dataset, val_dataset)
-    elif args['models'] == 2:
+    elif args['framework'] == 'co':
+
+        # Set model2 parameters
         model2 = Model('model2', NUM_OF_CLASSES, args['batch_size'], args['epochs'])
-        model2.buildModel(x_train.shape[1:])
+
+        if args['architecture'] == 'paper_model':
+            model2.build_paper_model(x_train.shape[1:])
+        elif args['architecture'] == 'keras_model':
+            model2.build_keras_model(x_train.shape[1:])
+        else:
+            raise ValueError('Argument Error: Did you mean keras_model?') 
+        
         run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, args['epochs'], args['batch_size'])
 
+    # Model 1 summary
     model_sum_1 = model1.model.summary()
     print(f'model1 summary: {model_sum_1}')
     #keras.utils.plot_model(model1.model, 'model1.png', show_shapes=True)
@@ -129,7 +139,8 @@ def main(args):
         print("model.predict gave an error")
     model1.saveModel()  
     
-    if args['models'] == 2:
+    # Model 2 summary
+    if args['framework'] == 'co':
         model_sum_2 = model2.model.summary()
         print(f'model2 summary: {model_sum_2}')
         #keras.utils.plot_model(model2.model, 'model2.png', show_shapes=True)

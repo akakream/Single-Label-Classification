@@ -40,7 +40,6 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
 
     if model_1 == None or model_2 == None:
         raise Exception('Models are not built properly')
-        exit()
 
     optimizer_1 = keras.optimizers.Adam(learning_rate=0.001)
     optimizer_2 = keras.optimizers.Adam(learning_rate=0.001)
