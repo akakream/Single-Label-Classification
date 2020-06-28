@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-from mmd import mmd
+from mmd import mmd2
 import time
 
 def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2):
@@ -16,13 +16,13 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     #loss_array_2 = tf.nn.softmax_cross_entropy_with_logits(y_batch_train, logits_2)
     
     lamb_2 = 1
-    L2 = mmd(l2_logits_m1, l2_logits_m2) * lamb_2 
+    L2 = mmd2(l2_logits_m1, l2_logits_m2) * lamb_2 
 
     # The model does not have a softmax layer. Thus we perform it.
     lamb_3 = 1
     #softed_logits_1 = tf.nn.softmax(logits_1)
     #softed_logits_2 = tf.nn.softmax(logits_2)
-    L3 = mmd(logits_1, logits_2) * lamb_3
+    L3 = mmd2(logits_1, logits_2) * lamb_3
     
     # Chooses the args of the (batch_size*3/4) low loss samples in the corresponding low_loss arrays
     low_loss_args_1 = tf.argsort(loss_array_1)[:int(batch_size*3/4)]
