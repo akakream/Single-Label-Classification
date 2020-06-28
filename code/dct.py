@@ -8,12 +8,8 @@ import pickle
 import datetime
 import argparse
 from tensorflow import keras
-from keras.datasets import cifar10
-from keras.datasets import cifar100
-from keras.datasets import mnist
 from run_together import run_together
-
-NUM_OF_CLASSES = None
+from prep_data import prep_data
 
 def add_arguments():
     ap = argparse.ArgumentParser(prog='discrepant collaborative training', 
@@ -28,64 +24,6 @@ def add_arguments():
 
     return args
 
-def prep_data(dataset):
-    '''
-    Creates numpy arrays that are ready to be fed into model
-    '''
-
-    global NUM_OF_CLASSES
-    
-    if dataset == 'cifar10':
-        '''
-        32x32
-        50k train
-        10k test
-        '''
-        NUM_OF_CLASSES = 10
-        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    
-    elif dataset == 'cifar100_fine':
-        '''
-        32x32
-        50k train
-        10k test
-        '''
-        NUM_OF_CLASSES = 100
-        (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='fine')
-    
-    elif dataset == 'cifar100_coarse': 
-        '''
-        32x32
-        50k train
-        10k test
-        '''
-        NUM_OF_CLASSES = 20
-        (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='coarse')
-    
-    elif dataset == 'mnist': 
-        '''
-        28x28
-        60k train
-        10k test
-        '''
-        NUM_OF_CLASSES = 10
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-    '''
-    For now the SparseCategoricalCrossEntropy is used which takes integer inputs
-    If you want to use CategoricalCrossEntropy which takes one-hot vectors, uncomment below
-    '''
-    # Convert class vectors to binary class matrices.
-    #y_train = keras.utils.to_categorical(y_train, 10)
-    #y_test = keras.utils.to_categorical(y_test, 10)
-
-    x_train = x_train.astype('float32')
-    x_test = x_test.astype('float32')
-    x_train /= 255.0
-    x_test /= 255.0
-
-    return x_train, x_test, y_train, y_test
-
 def main(args):
 
     if args['framework'] not in ('co', 'single'): 
@@ -93,15 +31,12 @@ def main(args):
 
     # Load the given dataset by user
     if args['dataset'] in ('cifar10', 'cifar100_fine', 'cifar100_coarse', 'mnist'):  
-        x_train, x_test, y_train, y_test = prep_data(args['dataset'])
+        train_dataset, test_dataset, val_dataset, x_train, x_test, y_train, y_test, NUM_OF_CLASSES = prep_data(args['dataset'], args['batch_size'])
     else:
         raise ValueError('Argument Error: Legal arguments are cifar10, cifar100_fine, cifar100_fine, mnist')
     
     # Set model1 parameters
     model1 = Model('model1', NUM_OF_CLASSES, args['batch_size'], args['epochs'])
-    
-    # Create validation arrays and by-custom-training-loop-consumable datasets
-    train_dataset, test_dataset, val_dataset = model1.useTfData(x_train, x_test, y_train, y_test)
     
     # model1 is going to be created no matter what, as long as the argument is right
     if args['architecture'] == 'paper_model':

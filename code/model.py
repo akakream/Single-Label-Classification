@@ -4,8 +4,6 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPooling2D, AveragePooling2D, BatchNormalization, Activation, LeakyReLU
-import tensorflow.keras.backend as K
-from mmd import mmd
 import time
 
 class Model:
@@ -35,26 +33,6 @@ class Model:
         low_loss_samples = tf.gather(loss_array, low_loss_args)
 
         return tf.nn.compute_average_loss(low_loss_samples, global_batch_size=int(self.batch_size*3/4))
-    
-    # FIXME: although x_train and y_train are not shuffled, val sets created 
-    def useTfData(self, x_train, x_test, y_train, y_test):
-
-        train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-        SHUFFLE_BUFFER_SIZE = 100
-        train_dataset = train_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(self.batch_size)
-        
-        x_val = x_train[-10000:]
-        y_val = y_train[-10000:]
-        x_train = x_train[:-10000]
-        y_train = y_train[:-10000]
-
-        val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
-        val_dataset = val_dataset.batch(self.batch_size)
-
-        test_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-        test_dataset = test_dataset.batch(self.batch_size)
-
-        return train_dataset, test_dataset, val_dataset
 
     def cust_training_loop(self, train_dataset, test_dataset, val_dataset):
         
