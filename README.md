@@ -27,11 +27,12 @@ If you have any recommendation or offer of improvement, feel free to do a pull r
 ## Caveats
 
 There are two models that can be used paper\_model and keras\_model.
-keras\_model gives a decent accuracy if it is used with a batch\_size of 32.
+keras\_model gives a decent accuracy if it is used with a batch\_size of 32, 64 or 128.
 However, paper\_model gives a decent accuracy only with the batch\_size of 128. 
 
-The implementation of the MMD module is not optimal and takes too much memory.
-This code was ran on a Tesla P100-PCIE-16GB GPU and this gpu was not able to handle a batch\_size of 64 and 128.  
+The models are unstable!
+
+The implementation of the MMD module may not be optimal. 
 
 ## How to run
 
