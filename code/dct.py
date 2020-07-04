@@ -20,6 +20,8 @@ def add_arguments():
     ap.add_argument('-f', '--framework', default='co', help='collaborative training or training with single model: co and single')
     ap.add_argument('-a', '--architecture', default='paper_model', help='paper_model or keras_model')
     ap.add_argument('-d', '--dataset', default='cifar10', help='cifar10, cifar100_fine, cifar100_coarse or mnist')
+    ap.add_argument('-nt', '--noise_type', help='type of label noise to be added: symmetry, flip or none')
+    ap.add_argument('-nr', '--noise_rate', type=float, help='rate of label noise to be added, use float: between 0. and 1.')
     args = vars(ap.parse_args())
 
     return args
@@ -31,7 +33,7 @@ def main(args):
 
     # Load the given dataset by user
     if args['dataset'] in ('cifar10', 'cifar100_fine', 'cifar100_coarse', 'mnist'):  
-        train_dataset, test_dataset, val_dataset, x_train, x_test, y_train, y_test, NUM_OF_CLASSES = prep_data(args['dataset'], args['batch_size'])
+        train_dataset, test_dataset, val_dataset, x_train, x_test, y_train, y_test, NUM_OF_CLASSES = prep_data(args['dataset'], args['batch_size'], args['noise_type'], args['noise_rate'])
     else:
         raise ValueError('Argument Error: Legal arguments are cifar10, cifar100_fine, cifar100_fine, mnist')
     

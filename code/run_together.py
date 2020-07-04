@@ -5,9 +5,8 @@ import time
 
 def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2):
     
-    # Integer labels 
-    loss_object_1 = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
-    loss_object_2 = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
+    loss_object_1 = keras.losses.CategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
+    loss_object_2 = keras.losses.CategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
     loss_array_1 = loss_object_1(y_batch_train, logits_1)
     loss_array_2 = loss_object_2(y_batch_train, logits_2)
     
@@ -44,17 +43,10 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
     optimizer_1 = keras.optimizers.Adam(learning_rate=0.001)
     optimizer_2 = keras.optimizers.Adam(learning_rate=0.001)
 
-    # Integer label
-    train_acc_metric_1 = keras.metrics.SparseCategoricalAccuracy()
-    train_acc_metric_2 = keras.metrics.SparseCategoricalAccuracy()
-    val_acc_metric_1 = keras.metrics.SparseCategoricalAccuracy()
-    val_acc_metric_2 = keras.metrics.SparseCategoricalAccuracy()
-    
-    # One-hot label
-    #train_acc_metric_1 = keras.metrics.CategoricalAccuracy()
-    #train_acc_metric_2 = keras.metrics.CategoricalAccuracy()
-    #val_acc_metric_1 = keras.metrics.CategoricalAccuracy()
-    #val_acc_metric_2 = keras.metrics.CategoricalAccuracy()
+    train_acc_metric_1 = keras.metrics.CategoricalAccuracy()
+    train_acc_metric_2 = keras.metrics.CategoricalAccuracy()
+    val_acc_metric_1 = keras.metrics.CategoricalAccuracy()
+    val_acc_metric_2 = keras.metrics.CategoricalAccuracy()
     
     for epoch in range(epochs):
 

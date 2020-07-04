@@ -25,7 +25,7 @@ class Model:
 
     def custom_loss(self, y_batch_train, logits):
 
-        loss_object = keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
+        loss_object = keras.losses.CategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
         loss_array = loss_object(y_batch_train, logits)
            
         low_loss_args = tf.argsort(loss_array)[:int(self.batch_size*3/4)]
@@ -41,8 +41,8 @@ class Model:
             exit()
 
         optimizer = keras.optimizers.Adam(learning_rate=0.001)
-        train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
-        val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+        train_acc_metric = keras.metrics.CategoricalAccuracy()
+        val_acc_metric = keras.metrics.CategoricalAccuracy()
 
         for epoch in range(self.epochs):
 
@@ -110,7 +110,7 @@ class Model:
         x = Flatten()(x)
         x = Dense(128)(x)
         outputs = Dense(self.classes)(x)
-        # There is no softmax activation layer because it is applied by SparseCategoricalCrossentropy in training loop
+        # There is no softmax activation layer because it is applied by CategoricalCrossentropy in training loop
 
         model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
     
@@ -134,7 +134,7 @@ class Model:
         x = Dense(512, activation='relu')(x)
         x = Dropout(0.5)(x)
         outputs = Dense(self.classes)(x)
-        # There is no softmax activation layer because it is applied by SparseCategoricalCrossentropy in training loop
+        # There is no softmax activation layer because it is applied by CategoricalCrossentropy in training loop
 
         model = keras.Model(inputs=inputs, outputs=[outputs, l2_logits], name='dct_model')
     
