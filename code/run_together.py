@@ -23,15 +23,15 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     #softed_logits_2 = tf.nn.softmax(logits_2)
     L3 = mmd2(logits_1, logits_2) * lamb_3
     
-    # Chooses the args of the (batch_size*3/4) low loss samples in the corresponding low_loss arrays
-    low_loss_args_1 = tf.argsort(loss_array_1)[:int(batch_size*3/4)]
-    low_loss_args_2 = tf.argsort(loss_array_2)[:int(batch_size*3/4)]
+    # Chooses the args of the (batch_size*1/4) low loss samples in the corresponding low_loss arrays
+    low_loss_args_1 = tf.argsort(loss_array_1)[:int(batch_size*1/4)]
+    low_loss_args_2 = tf.argsort(loss_array_2)[:int(batch_size*1/4)]
     # Gets the low_loss_samples as conducted by the peer network
     low_loss_samples_1 = tf.gather(loss_array_1, low_loss_args_2)
     low_loss_samples_2 = tf.gather(loss_array_2, low_loss_args_1)
 
-    loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size*3/4))
-    loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size*3/4))
+    loss_1 = tf.nn.compute_average_loss(low_loss_samples_1, global_batch_size=int(batch_size*1/4))
+    loss_2 = tf.nn.compute_average_loss(low_loss_samples_2, global_batch_size=int(batch_size*1/4))
 
     return loss_1+L3-L2, loss_2+L3-L2, L3, L2
 
