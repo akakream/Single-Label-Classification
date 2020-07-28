@@ -5,11 +5,12 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from model import Model
 import pickle
-import datetime
+from datetime import datetime
 import argparse
 from tensorflow import keras
 from run_together import run_together
 from prep_data import prep_data
+
 
 def add_arguments():
     ap = argparse.ArgumentParser(prog='discrepant collaborative training', 
@@ -27,7 +28,7 @@ def add_arguments():
     return args
 
 def main(args):
-
+    
     if args['framework'] not in ('co', 'single'): 
         raise ValueError('Enter 1 for a single model, enter 2 for collaborative model')
 

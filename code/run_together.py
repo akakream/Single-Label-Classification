@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 from mmd import mmd2
 import time
+from datetime import datetime
 
 def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2):
     
@@ -35,6 +36,7 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
 
     return loss_1+L3-L2, loss_2+L3-L2, L3, L2
 
+# @tf.function
 def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epochs, batch_size):
 
     if model_1 == None or model_2 == None:
@@ -47,8 +49,23 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
     train_acc_metric_2 = keras.metrics.CategoricalAccuracy()
     val_acc_metric_1 = keras.metrics.CategoricalAccuracy()
     val_acc_metric_2 = keras.metrics.CategoricalAccuracy()
+
+    # TODO: NOT SURE IF THIS IS THE RIGHT PLACE TO PUT THIS, FIX LATER
+    logdir = '../output/logs/scalars/' + datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorboard_callback_model1 = keras.callbacks.TensorBoard(log_dir=logdir + '/model1')
+    tensorboard_callback_model2 = keras.callbacks.TensorBoard(log_dir=logdir + '/model2')
+    train_summary_writer_model1 = tf.summary.create_file_writer(logdir + '/model1')
+    train_summary_writer_model2 = tf.summary.create_file_writer(logdir + '/model2')
+
+    # TODO: NOT SURE IF THIS IS THE RIGHT PLACE TO PUT THIS, FIX LATER
+    tensorboard_callback_model1.set_model(model_1)
+    tensorboard_callback_model2.set_model(model_2)
     
     for epoch in range(epochs):
+
+        # FOR TESTING PURPOSES, REMOVE THIS
+        print(f"model_1.trainable_weights: {model_1.trainable_weights}")
+        print(f"model_2.trainable_weights: {model_2.trainable_weights}")
 
         print(f'Start of epoch {epoch}')
         start_time = time.time()
@@ -77,7 +94,13 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
                 print(f"Seen so far: {(step+1)*batch_size} samples")
                 print(f"L2 to be maximized: {L2}")
                 print(f"L3 to be minimized: {L3}")
-                                               
+            with train_summary_writer_model1.as_default():
+                tf.summary.scalar('loss', float(loss_value_1), step=epoch)
+                tf.summary.scalar('accuracy', train_acc_metric_1.result(), step=epoch)
+            with train_summary_writer_model2.as_default():
+                tf.summary.scalar('loss', float(loss_value_2), step=epoch)
+                tf.summary.scalar('accuracy', train_acc_metric_2.result(), step=epoch)
+       
         train_acc_1 = train_acc_metric_1.result()
         train_acc_2 = train_acc_metric_2.result()
         print(f'Training acc 1 over epoch: {float(train_acc_1)}')
