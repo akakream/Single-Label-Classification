@@ -44,7 +44,7 @@ mkdir output
 ## How to run
 
 ```
-python dct.py -f co -a paper\_model -d cifar10 -b 128 -e 6 
+python dct.py -f co -a paper_model -d cifar10 -b 128 -e 6 
 ```
 
 or just run the scipt in the scripts folder
