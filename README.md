@@ -34,9 +34,20 @@ The models are unstable!
 
 The implementation of the MMD module may not be optimal. 
 
+## How to prepare
+
+Create the output folder:
+```
+mkdir output
+```
+
 ## How to run
 
+```
 python dct.py -f co -a paper\_model -d cifar10 -b 128 -e 6 
+```
+
+or just run the scipt in the scripts folder
 
 ## Empirical Results
 
