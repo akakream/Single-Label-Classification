@@ -2,6 +2,7 @@ __pycache__
 data/
 models/
 output/
-script/
+scripts/dct_gpu.sh
+scripts/dct_standard.sh
 test/ 
 saved_models/
