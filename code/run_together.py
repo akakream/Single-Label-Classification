@@ -68,10 +68,6 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
     
     for epoch in range(epochs):
 
-        # FOR TESTING PURPOSES, REMOVE THIS
-        print(f"model_1.trainable_weights: {model_1.trainable_weights}")
-        print(f"model_2.trainable_weights: {model_2.trainable_weights}")
-
         for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
             with tf.GradientTape(persistent=True) as tape:
                 
@@ -102,9 +98,13 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
             with train_summary_writer_model1.as_default():
                 tf.summary.scalar('loss', train_loss_metric_1.result(), step=epoch)
                 tf.summary.scalar('accuracy', train_acc_metric_1.result(), step=epoch)
+                tf.summary.scalar('L2', float(L2), step=epoch)
+                tf.summary.scalar('L3', float(L3), step=epoch)
             with train_summary_writer_model2.as_default():
                 tf.summary.scalar('loss', train_loss_metric_2.result(), step=epoch)
                 tf.summary.scalar('accuracy', train_acc_metric_2.result(), step=epoch)
+                tf.summary.scalar('L2', float(L2), step=epoch)
+                tf.summary.scalar('L3', float(L3), step=epoch)
        
         print(f'Training acc 1 over epoch: {train_acc_metric_1.result()}')
         print(f'Training acc 2 over epoch: {train_acc_metric_2.result()}')
