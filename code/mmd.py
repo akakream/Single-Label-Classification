@@ -59,11 +59,11 @@ def mmd(X,Y):
 def mmd2(X,Y):
 
     dimsX = list(X.shape)
-    dims_to_reduceX = dimsX[1:] # all dimension except the first two (they are batch_sizes) will be reshaped into vectors
+    dims_to_reduceX = dimsX[1:] # all dimension except the first (it is the batch_sizes) will be reshaped into a vector
     reduced_dimX = reduce(lambda x,y: x*y, dims_to_reduceX)
    
     dimsY = list(Y.shape)
-    dims_to_reduceY = dimsY[1:] # all dimension except the first two (they are batch_sizes) will be reshaped into vectors
+    dims_to_reduceY = dimsY[1:] # all dimension except the first (it is the batch_sizes) will be reshaped into a vector
     reduced_dimY = reduce(lambda x,y: x*y, dims_to_reduceY)
    
     X = tf.reshape(X, dimsX[:1]+[reduced_dimX])
@@ -78,36 +78,54 @@ def mmd2(X,Y):
 
     r = lambda x: tf.expand_dims(x, 0)
     c = lambda x: tf.expand_dims(x, 1)
-
-    K_XX = tf.exp(-(1/2) * (-2 * XX + c(X_sqnorms) + r(X_sqnorms)))
-    K_XY = tf.exp(-(1/2) * (-2 * XY + c(X_sqnorms) + r(Y_sqnorms)))
-    K_YY = tf.exp(-(1/2) * (-2 * YY + c(Y_sqnorms) + r(Y_sqnorms))) 
     
-    return tf.reduce_mean(K_XX) - tf.reduce_mean(K_XY) + tf.reduce_mean(K_YY)
+    K_XX = tf.exp(-(1/2) * (-2 * XX + c(X_sqnorms) + r(X_sqnorms)))
+    K_XY = tf.exp(-(1/reduced_dimX) * (-2 * XY + c(X_sqnorms) + r(Y_sqnorms)))
+    K_YY = tf.exp(-(1/2) * (-2 * YY + c(Y_sqnorms) + r(Y_sqnorms))) 
+   
+    print((-2 * XY + c(X_sqnorms) + r(Y_sqnorms)))
+    print(K_XY)
+
+    return -tf.reduce_mean(K_XY)
 
 def test_mmd():
 
     a = tf.constant([[0.,34.,2.,3.,4.],[5.,34.,76.,82.,9.],[32.,342.,532.,23.,1.]])
     b = tf.constant([[5.,2.,7.,238.,9.],[0.,1.,25.,33.,4.],[32.,54.,15.,78.,4.]])
 
-    c = tf.constant([[0.,1.,2.,3.,4.]])
-    d = tf.constant([[5.,6.,7.,8.,9.]])
+    c_2 = tf.constant([[0.,1.,2.,3.,4.],[2.,3.,4.,5.,6.]])
+    d_2 = tf.constant([[7.,8.,9.,10.,11.],[9.,10.,11.,12.,13.]])
 
+    c = tf.constant([[0.,1.,0.3,0.2,0.1],[1.,0.2,0.1,0.1,0.5]])
+    d = tf.constant([[0.,0.7,0.2,0.9,0.2],[0.95,0.1,0.2,0.1,0.4]])
+    
     e = tf.constant([[[[0.,34.,2.,3.,4.],[5.,34.,76.,82.,9.],[32.,342.,532.,23.,1.]], [[3.,23.,432.,342.,43.],[51.,2.,72.,4.,9.],[23.,3.,5323.,22.,32.]]]])
     f = tf.constant([[[[5.,2.,7.,238.,9.],[0.,1.,25.,33.,4.],[32.,54.,15.,78.,4.]], [[6.,345.,56.,76.,78.],[556.,4.,766.,2.,95.],[2.,32.,578.,268.,657.]]]])
-
-    t_1 = mmd(e,f)
-    t_2 = mmd2(e,f)
-    t_3 = mmd(a,b)
-    t_4 = mmd2(a,b)
-    t_5 = mmd(c,d)
-    t_6 = mmd2(c,d)
     
-    print(f'mmd(e,f): {t_1}')
-    print(f'mmd2(e,f): {t_2}')
-    print(f'mmd(a,b): {t_3}')
-    print(f'mmd2(a,b): {t_4}')
-    print(f'mmd(c,d): {t_5}')
-    print(f'mmd2(c,d): {t_6}')
+    c_1 = tf.constant([[0.,1.,2.,3.,4.],[0.,1.,2.,3.,4.],[0.,1.,2.,3.,4.],[0.,1.,2.,3.,4.],[0.,1.,2.,3.,4.]])
+    d_1 = tf.constant([[5.,6.,7.,8.,9.],[5.,6.,7.,8.,9.],[5.,6.,7.,8.,9.],[5.,6.,7.,8.,9.],[5.,6.,7.,8.,9.]])
+    
+    e_1 = tf.constant([[[[0.,34.,2.,3.,4.],[5.,34.,76.,82.,9.],[32.,342.,532.,23.,1.]]], [[[3.,23.,432.,342.,43.],[51.,2.,72.,4.,9.],[23.,3.,5323.,22.,32.]]]])
+    f_1 = tf.constant([[[[5.,2.,7.,238.,9.],[0.,1.,25.,33.,4.],[32.,54.,15.,78.,4.]]], [[[6.,345.,56.,76.,78.],[556.,4.,766.,2.,95.],[2.,32.,578.,268.,657.]]]])
 
-#test_mmd()
+    #t_1 = mmd(e,f)
+    #t_2 = mmd2(e_1,f_1)
+    #t_3 = mmd(a,b)
+    #t_4 = mmd2(a,b)
+    #t_5 = mmd(c,d)
+    t_6 = mmd2(c,d)
+
+    #t_7 = mmd2(c_1,d_1)
+    
+    #print(f'mmd(e,f): {t_1}')
+    #print(f'mmd2(e_1,f_1): {t_2}')
+    #print(f'mmd(a,b): {t_3}')
+    #print(f'mmd2(a,b): {t_4}')
+    #print(f'mmd(c,d): {t_5}')
+    print(f'mmd2(c,d): {t_6}')
+    #print(f'mmd2(c_1,d_1): {t_7}')
+
+    kl = tf.keras.losses.KLDivergence()
+    print(f'kl result: {kl(c,d).numpy}')
+
+test_mmd()

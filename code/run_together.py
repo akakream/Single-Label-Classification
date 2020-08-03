@@ -4,7 +4,7 @@ from mmd import mmd2
 import time
 from datetime import datetime
 
-def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2):
+def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2, divergence_metric):
     
     loss_object_1 = keras.losses.CategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
     loss_object_2 = keras.losses.CategoricalCrossentropy(from_logits=True, reduction=keras.losses.Reduction.NONE)
@@ -15,15 +15,22 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     #loss_array_1 = tf.nn.softmax_cross_entropy_with_logits(y_batch_train, logits_1)
     #loss_array_2 = tf.nn.softmax_cross_entropy_with_logits(y_batch_train, logits_2)
     
-    lamb_2 = 1
-    L2 = mmd2(l2_logits_m1, l2_logits_m2) * lamb_2 
-
-    # The model does not have a softmax layer. Thus we perform it.
-    lamb_3 = 1
-    #softed_logits_1 = tf.nn.softmax(logits_1)
-    #softed_logits_2 = tf.nn.softmax(logits_2)
-    L3 = mmd2(logits_1, logits_2) * lamb_3
+    lambda_2 = 100
+    lambda_3 = 100
     
+    if divergence_metric == 'mmd':
+        L2 = mmd2(l2_logits_m1, l2_logits_m2) * lambda_2 
+
+        # The model does not have a softmax layer. Thus we perform it.
+        #softed_logits_1 = tf.nn.softmax(logits_1)
+        #softed_logits_2 = tf.nn.softmax(logits_2)
+        L3 = mmd2(logits_1, logits_2) * lambda_3
+    elif divergence_metric == 'jensen_shannon':
+        M2 = (1/2) * (l2_logits_m1 + l2_logits_m2)
+        M3 = (1/2) * (logits_1 + logits_2)
+        L2 = lambda_2 * ((1/2) * keras.losses.KLDivergence(l2_logits_m1, M2) + (1/2) * keras.losses.KLDivergence(l2_logits_m2, M2))
+        L3 = lambda_3 * ((1/2) * keras.losses.KLDivergence(logits_1, M3) + (1/2) * keras.losses.KLDivergence(logits_2, M3))
+
     # Chooses the args of the (batch_size*1/4) low loss samples in the corresponding low_loss arrays
     low_loss_args_1 = tf.argsort(loss_array_1)[:int(batch_size*1/4)]
     low_loss_args_2 = tf.argsort(loss_array_2)[:int(batch_size*1/4)]
@@ -37,7 +44,7 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     return loss_1+L3-L2, loss_2+L3-L2, L3, L2
 
 # @tf.function
-def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epochs, batch_size):
+def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epochs, batch_size, divergence_metric):
 
     if model_1 == None or model_2 == None:
         raise Exception('Models are not built properly')
@@ -57,7 +64,6 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
     val_acc_metric_2 = keras.metrics.CategoricalAccuracy('val_acc_for_model_2')
     val_loss_metric_2 = keras.metrics.Mean('val_loss_for_model_2', dtype=tf.float32)
 
-    # TODO: NOT SURE IF THIS IS THE RIGHT PLACE TO PUT THIS, FIX LATER
     logdir = '../output/logs/scalars/' + datetime.now().strftime("%Y%m%d-%H%M%S")
     
     train_summary_writer_model1 = tf.summary.create_file_writer(logdir + '/model1/train')
@@ -74,13 +80,13 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
                 logits_1, l2_logits_m1 = model_1(x_batch_train, training=True)
                 logits_2, l2_logits_m2 = model_2(x_batch_train, training=True)
                 loss_value_1, loss_value_2, L3, L2 = loss_fun(y_batch_train, logits_1, logits_2, batch_size,
-                        l2_logits_m1, l2_logits_m2)
+                        l2_logits_m1, l2_logits_m2, divergence_metric)
             
-            grads_1 = tape.gradient(loss_value_1, model_1.trainable_weights)
-            grads_2 = tape.gradient(loss_value_2, model_2.trainable_weights)
+            grads_1 = tape.gradient(loss_value_1, model_1.trainable_variables)
+            grads_2 = tape.gradient(loss_value_2, model_2.trainable_variables)
             
-            optimizer_1.apply_gradients(zip(grads_1, model_1.trainable_weights))
-            optimizer_2.apply_gradients(zip(grads_2, model_2.trainable_weights))
+            optimizer_1.apply_gradients(zip(grads_1, model_1.trainable_variables))
+            optimizer_2.apply_gradients(zip(grads_2, model_2.trainable_variables))
             
             # Update metrics for visualization
             train_loss_metric_1.update_state(loss_value_1)
@@ -129,7 +135,7 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
                 tf.summary.scalar('accuracy', val_acc_metric_2.result(), step=epoch)
 
         print(f'Validation acc for model 1: {val_acc_metric_1.result()}')
-        print(f'Validation acc for model 1: {val_acc_metric_2.result()}')
+        print(f'Validation acc for model 2: {val_acc_metric_2.result()}')
         val_acc_metric_1.reset_states()
         val_acc_metric_2.reset_states()
         # val_loss_metric_1.reset_states()

@@ -23,6 +23,7 @@ def add_arguments():
     ap.add_argument('-d', '--dataset', default='cifar10', help='cifar10, cifar100_fine, cifar100_coarse or mnist')
     ap.add_argument('-nt', '--noise_type', help='type of label noise to be added: symmetry, flip or none')
     ap.add_argument('-nr', '--noise_rate', type=float, help='rate of label noise to be added, use float: between 0. and 1.')
+    ap.add_argument('-dm', '--divergence_metric', help='Divergence metric to be used to diverge and converge the predictions of the models. Options: "mmd" or "jensen_shannon".')
     args = vars(ap.parse_args())
 
     return args
@@ -65,7 +66,7 @@ def main(args):
         else:
             raise ValueError('Argument Error: Did you mean keras_model?') 
         
-        run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, args['epochs'], args['batch_size'])
+        run_together(model1.model, model2.model, train_dataset, test_dataset, val_dataset, args['epochs'], args['batch_size'], args['divergence_metric'])
 
     # Model 1 summary
     model_sum_1 = model1.model.summary()
