@@ -26,10 +26,11 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
         #softed_logits_2 = tf.nn.softmax(logits_2)
         L3 = mmd2(logits_1, logits_2) * lambda_3
     elif divergence_metric == 'jensen_shannon':
-        M2 = (1/2) * (l2_logits_m1 + l2_logits_m2)
-        M3 = (1/2) * (logits_1 + logits_2)
-        L2 = lambda_2 * ((1/2) * keras.losses.KLDivergence(l2_logits_m1, M2) + (1/2) * keras.losses.KLDivergence(l2_logits_m2, M2))
-        L3 = lambda_3 * ((1/2) * keras.losses.KLDivergence(logits_1, M3) + (1/2) * keras.losses.KLDivergence(logits_2, M3))
+        kl = keras.lossses.KLDivergence()
+        M2 = (0.5) * (l2_logits_m1 + l2_logits_m2)
+        M3 = (0.5) * (logits_1 + logits_2)
+        L2 = lambda_2 * (0.5 * kl(l2_logits_m1, M2) + 0.5 * kl(l2_logits_m2, M2))
+        L3 = lambda_3 * (0.5 * kl(logits_1, M3) + 0.5 * kl(logits_2, M3))
 
     # Chooses the args of the (batch_size*1/4) low loss samples in the corresponding low_loss arrays
     low_loss_args_1 = tf.argsort(loss_array_1)[:int(batch_size*1/4)]
