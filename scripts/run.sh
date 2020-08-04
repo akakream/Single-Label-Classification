@@ -1,3 +1,3 @@
 cd ../code
 
-python dct.py -f co -a paper_model -d cifar10 -b 32 -e 6 -nt symmetry -nr 0.5 -dm jensen_shannon
+python dct.py -f co -a paper_model -d cifar10 -b 128 -e 2 -nt symmetry -nr 0.5 -dm mmd -si 2.0 -sr 0.25 -lto 1.0 -ltr 1.0

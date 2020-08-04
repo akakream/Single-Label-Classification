@@ -56,7 +56,7 @@ def mmd(X,Y):
     return disc_loss
 
 
-def mmd2(X,Y):
+def mmd2(X,Y, sigma):
 
     dimsX = list(X.shape)
     dims_to_reduceX = dimsX[1:] # all dimension except the first (it is the batch_sizes) will be reshaped into a vector
@@ -79,11 +79,11 @@ def mmd2(X,Y):
     r = lambda x: tf.expand_dims(x, 0)
     c = lambda x: tf.expand_dims(x, 1)
     
-    K_XX = tf.exp(-(1/2) * (-2 * XX + c(X_sqnorms) + r(X_sqnorms)))
-    K_XY = tf.exp(-(1/2) * (-2 * XY + c(X_sqnorms) + r(Y_sqnorms)))
-    K_YY = tf.exp(-(1/2) * (-2 * YY + c(Y_sqnorms) + r(Y_sqnorms))) 
+    K_XX = tf.exp(-(1./sigma) * (-2. * XX + c(X_sqnorms) + r(X_sqnorms)))
+    K_XY = tf.exp(-(1./sigma) * (-2. * XY + c(X_sqnorms) + r(Y_sqnorms)))
+    K_YY = tf.exp(-(1./sigma) * (-2. * YY + c(Y_sqnorms) + r(Y_sqnorms))) 
    
-    return tf.reduce_mean(K_XX) -2 * tf.reduce_mean(K_XY) + tf.reduce_mean(K_YY)
+    return tf.reduce_mean(K_XX) -2. * tf.reduce_mean(K_XY) + tf.reduce_mean(K_YY)
 
 def test_mmd():
 
