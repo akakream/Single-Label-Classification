@@ -3,6 +3,11 @@ from tensorflow import keras
 from mmd import mmd2
 import time
 from datetime import datetime
+from tensorboard.plugins.hparams import api as hp
+
+def normalize_01(tensor):
+    min_val = tf.reduce_min(tensor)
+    return tf.math.divide(tf.math.subtract(tensor, min_val), tf.math.subtract(tf.reduce_max(tensor), min_val))
 
 def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_logits_m2, divergence_metric, sigma, swap_rate, lambda2, lambda3):
     
@@ -16,12 +21,14 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
     #loss_array_2 = tf.nn.softmax_cross_entropy_with_logits(y_batch_train, logits_2)
     
     if divergence_metric == 'mmd':
-        L2 = mmd2(l2_logits_m1, l2_logits_m2, sigma) * lambda2 
-
+        L2 = mmd2(l2_logits_m1, l2_logits_m2, sigma)
+        L2 = L2 * lambda2
         # The model does not have a softmax layer. Thus we perform it.
-        # softed_logits_1 = tf.nn.softmax(logits_1)
-        # softed_logits_2 = tf.nn.softmax(logits_2)
-        L3 = mmd2(logits_1, logits_2, sigma) * lambda3
+        # softed_logits_1_3 = tf.nn.softmax(logits_1)
+        # softed_logits_2_3 = tf.nn.softmax(logits_2)
+        L3 = mmd2(logits_1, logits_2, sigma)
+        L3 = L3 * lambda3
+    
     elif divergence_metric == 'jensen_shannon':
         kl = keras.lossses.KLDivergence()
         M2 = (0.5) * (l2_logits_m1 + l2_logits_m2)
@@ -41,11 +48,30 @@ def loss_fun(y_batch_train, logits_1, logits_2, batch_size, l2_logits_m1, l2_log
 
     return loss_1+L3-L2, loss_2+L3-L2, L3, L2
 
-# @tf.function
+#@tf.function
 def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epochs, batch_size, divergence_metric, sigma, swap_rate, lambda2, lambda3):
 
     if model_1 == None or model_2 == None:
         raise Exception('Models are not built properly')
+
+    '''
+    HYPERPARAMETER TUNING
+    '''
+    '''
+    HP_NUM_UNITS = hp.HParam('num_units', hp.Discrete([2, 32]))
+    HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(0.1, 0.2))
+    HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd']))
+
+    METRIC_ACCURACY = 'accuracy'
+
+    with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
+          hp.hparams_config(
+                  hparams=[HP_NUM_UNITS, HP_DROPOUT, HP_OPTIMIZER],
+                  metrics=[hp.Metric(METRIC_ACCURACY, display_name='Accuracy')],)
+    '''
+    '''
+    HYPERPARAMETER TUNING
+    '''
 
     optimizer_1 = keras.optimizers.Adam(learning_rate=0.001)
     optimizer_2 = keras.optimizers.Adam(learning_rate=0.001)
@@ -107,7 +133,7 @@ def run_together(model_1, model_2, train_dataset, test_dataset, val_dataset, epo
         print(f'Training acc 2 over epoch: {train_acc_metric_2.result()}')
         print(f"L2 to be maximized: {L2}")
         print(f"L3 to be minimized: {L3}")
-
+        
         train_acc_metric_1.reset_states()
         train_acc_metric_2.reset_states()
         train_loss_metric_1.reset_states()

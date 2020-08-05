@@ -98,7 +98,7 @@ class Model:
         x = Conv2D(256, (3,3), padding='same', name='l2-layer')(x)
         x = LeakyReLU(alpha=0.01)(x)
         l2_logits = x
-        x = BatchNormalization()(x)
+        #x = BatchNormalization()(x)
         x = Conv2D(256, (3,3), padding='same')(x)
         x = LeakyReLU(alpha=0.01)(x)
         x = BatchNormalization()(x)

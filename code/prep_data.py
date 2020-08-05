@@ -57,10 +57,18 @@ def prep_data(dataset, batch_size, noise_type, noise_rate):
     x_train /= 255.0
     x_test /= 255.0
 
+    # Uncomment this part when the tests are done, otherwise takes too long
+    '''
     x_val = x_train[-10000:]
     y_val = y_train[-10000:]
     x_train = x_train[:-10000]
     y_train = y_train[:-10000]
+    '''
+
+    x_val = x_train[-10:]
+    y_val = y_train[-10:]
+    x_train = x_train[:20]
+    y_train = y_train[:20]
     
     if noise_type != 'none':
 
