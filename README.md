@@ -1,4 +1,4 @@
-# Single-Label-Classification
+# Single Label Noisy Learning via Collaborative Training
 
 Unofficial Tensorflow implementation of the paper [Learning from Noisy Labels via Discrepant Collaborative Training](http://openaccess.thecvf.com/content_WACV_2020/papers/Han_Learning_from_Noisy_Labels_via_Discrepant_Collaborative_Training_WACV_2020_paper.pdf)
 
@@ -30,10 +30,6 @@ There are two models that can be used paper\_model and keras\_model.
 keras\_model gives a decent accuracy if it is used with a batch\_size of 32, 64 or 128.
 However, paper\_model gives a decent accuracy only with the batch\_size of 128. 
 
-The models are unstable!
-
-The implementation of the MMD module may not be optimal. 
-
 ## How to prepare
 
 Create the output folder:
@@ -44,7 +40,7 @@ mkdir output
 ## How to run
 
 ```
-python dct.py -f co -a paper_model -d cifar10 -b 128 -e 6 
+python dct.py -f co -a paper_model -d cifar10 -b 128 -e 6 -nt symmetry -nr 0.5 -dm mmd -si 100000.0 -sr 0.25 -lto 1.0 -ltr 1.0 
 ```
 
 or just run the scipt in the scripts folder
